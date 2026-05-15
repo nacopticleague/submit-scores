@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Submit Game Results — NA Coptic League</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Arial,sans-serif;background:#fff;color:#1a1a1a;}
+
+.header{background:#7d1a1a;padding:18px 20px 16px;text-align:center;position:relative;overflow:hidden;}
+.header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#c9b5a5,#e07878,#c9b5a5);}
+.header h1{font-size:1.4rem;color:#e8b4b4;font-weight:800;letter-spacing:.02em;}
+.header .sub{font-size:.72rem;color:#c98a8a;margin-top:4px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;}
+
+.filters{background:#d8c8ba;border-bottom:2px solid #b8a492;padding:14px 16px;}
+.fg{max-width:700px;margin:0 auto 10px;}
+.fg:last-child{margin-bottom:0;}
+.fg label{display:block;font-size:.7rem;font-weight:700;color:#5c1010;text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;}
+.fg select,.fg input{width:100%;padding:10px 12px;border:2px solid #b8a492;border-radius:6px;font-size:.92rem;font-weight:600;color:#5c1010;background:#fff;cursor:pointer;font-family:Arial,sans-serif;}
+.fg select:focus,.fg input:focus{outline:none;border-color:#7d1a1a;box-shadow:0 0 0 3px rgba(125,26,26,.15);}
+.fg select:disabled,.fg input:disabled{opacity:.5;cursor:not-allowed;background:#f5efe6;}
+
+.main{max-width:700px;margin:0 auto;padding:18px 14px 24px;width:100%;}
+
+.section{background:#fff;border:1px solid #eee4dc;border-radius:10px;box-shadow:0 1px 6px rgba(80,20,20,.07);padding:16px 18px;margin-bottom:12px;}
+.section h3{font-size:.95rem;color:#5c1010;font-weight:800;margin-bottom:12px;text-transform:uppercase;letter-spacing:.04em;}
+
+.winner-options{display:flex;flex-direction:column;gap:8px;}
+.winner-options label{display:flex;align-items:center;padding:12px 14px;border:2px solid #eee4dc;border-radius:8px;cursor:pointer;font-weight:700;color:#555;font-size:.95rem;transition:all .15s;}
+.winner-options label:hover{border-color:#b8a492;background:#faf6f2;}
+.winner-options input[type=radio]{margin-right:10px;accent-color:#7d1a1a;}
+.winner-options input[type=radio]:checked + .team-label{color:#5c1010;}
+.winner-options label:has(input:checked){border-color:#7d1a1a;background:#faf0ea;color:#5c1010;}
+
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.score-grid input{font-size:1.4rem;text-align:center;font-weight:800;padding:14px 10px;color:#5c1010;}
+
+.btn{width:100%;padding:14px;background:#7d1a1a;color:#fff;border:0;border-radius:8px;font-size:1rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;font-family:Arial,sans-serif;transition:background .15s;}
+.btn:hover:not(:disabled){background:#5c1010;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+
+.warn{background:#fff3e0;border-left:4px solid #f57c00;padding:10px 14px;border-radius:4px;font-size:.85rem;color:#5c2a00;margin-bottom:12px;}
+.warn strong{display:block;margin-bottom:2px;}
+
+.msg{padding:14px 16px;border-radius:8px;font-weight:700;font-size:.92rem;text-align:center;margin-bottom:12px;}
+.msg.ok{background:#e8f5e9;color:#1a6b1a;border:1px solid #a5d6a7;}
+.msg.err{background:#ffebee;color:#a22;border:1px solid #ef9a9a;}
+.msg.info{background:#e8d8b8;color:#5c1010;border:1px solid #b8a492;}
+
+.spinner{display:inline-block;width:18px;height:18px;border:3px solid #eee4dc;border-top-color:#7d1a1a;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:8px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+@media(max-width:520px){
+  .score-grid{grid-template-columns:1fr;}
+  .header h1{font-size:1.2rem;}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Submit Game Results</h1>
+  <div class="sub">NA Coptic League · 2026 Season</div>
+</div>
+
+<div class="filters">
+  <div class="fg">
+    <label>Date of Game</label>
+    <select id="dateField" disabled><option>Loading…</option></select>
+  </div>
+  <div class="fg">
+    <label>Division (optional)</label>
+    <select id="divField" disabled>
+      <option value="">All Divisions</option>
+      <option value="JHS">Junior High School (JHS)</option>
+      <option value="Girls">Girls</option>
+      <option value="HS-NY">High School — NY</option>
+      <option value="HS-NJ">High School — NJ</option>
+      <option value="College">College</option>
+      <option value="Mens">Mens</option>
+    </select>
+  </div>
+  <div class="fg">
+    <label>Game</label>
+    <select id="gameField" disabled><option>— Select date first —</option></select>
+  </div>
+</div>
+
+<div class="main">
+
+  <div id="alreadyScoredWarn" class="warn" style="display:none;">
+    <strong>⚠️ This game already has a final score.</strong>
+    <span id="alreadyScoredDetail"></span>
+    Submitting will overwrite it.
+  </div>
+
+  <div class="section" id="winnerSection" style="display:none;">
+    <h3>Winning Team</h3>
+    <div class="winner-options" id="winnerOptions"></div>
+  </div>
+
+  <div class="section" id="scoreSection" style="display:none;">
+    <h3>Final Score</h3>
+    <div class="score-grid">
+      <div class="fg" style="margin-bottom:0;">
+        <label>Winner's Score</label>
+        <input type="number" id="winScore" min="0" max="300" inputmode="numeric">
+      </div>
+      <div class="fg" style="margin-bottom:0;">
+        <label>Loser's Score</label>
+        <input type="number" id="loseScore" min="0" max="300" inputmode="numeric">
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="submitterSection" style="display:none;">
+    <h3>Your Info</h3>
+    <div class="fg">
+      <label>Full Name</label>
+      <input type="text" id="submitterName" placeholder="John Doe">
+    </div>
+    <div class="fg" style="margin-bottom:0;">
+      <label>Your Role</label>
+      <select id="submitterRole">
+        <option value="">— Select Role —</option>
+        <option value="Head Coach">Head Coach</option>
+        <option value="Assistant Coach">Assistant Coach</option>
+        <option value="Church Coordinator">Church Coordinator</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="msgBox"></div>
+
+  <button id="submitBtn" class="btn" style="display:none;" disabled>Submit Results</button>
+
+</div>
+
+<script>
+// ====== CONFIG ======
+const API_URL   = 'REPLACE_WITH_APPS_SCRIPT_WEB_APP_URL';
+const GAMES_URL = 'https://nacopticleague.github.io/full-schedule-homepage/data/games.json';
+// ====================
+
+const DIV_LABELS = {"HS-NY":"HS · NY","HS-NJ":"HS · NJ","JHS":"JHS","Girls":"Girls","College":"College","Mens":"Mens"};
+
+let GAMES = [];
+let selectedGame = null;
+
+const $ = id => document.getElementById(id);
+
+function fmtDateLabel(d){return new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});}
+function stripParens(n){return n.replace(/[()]/g,'');}
+function timeSort(a,b){function to24(t){var p=t.split(' '),hm=p[0].split(':'),h=+hm[0],m=+hm[1];if(p[1]==='PM'&&h!==12)h+=12;if(p[1]==='AM'&&h===12)h=0;return h*60+m;}return to24(a.time)-to24(b.time);}
+
+function showMsg(text, kind){
+  const box = $('msgBox');
+  box.innerHTML = '<div class="msg ' + kind + '">' + text + '</div>';
+  if (kind === 'ok') setTimeout(()=>{box.innerHTML='';}, 8000);
+}
+
+async function loadGames(){
+  try {
+    const res = await fetch(GAMES_URL + '?_=' + Date.now());
+    if (!res.ok) throw new Error('Could not load games (' + res.status + ')');
+    GAMES = await res.json();
+    buildDateDropdown();
+  } catch (err) {
+    showMsg('Could not load games: ' + err.message, 'err');
+  }
+}
+
+function buildDateDropdown(){
+  const sel = $('dateField');
+  const dateSet = {};
+  GAMES.forEach(g => { if(g.date) dateSet[g.date] = true; });
+  const dates = Object.keys(dateSet).sort();
+  if (!dates.length) {
+    sel.innerHTML = '<option>No games yet</option>';
+    return;
+  }
+  sel.innerHTML = '';
+  const today = new Date(); today.setHours(0,0,0,0);
+  let defaultIdx = 0, closestPastDiff = Infinity, closestPastIdx = 0;
+  dates.forEach((d, i) => {
+    const o = document.createElement('option');
+    o.value = d; o.text = fmtDateLabel(d);
+    sel.appendChild(o);
+    const diff = today - new Date(d + 'T12:00:00');
+    // Prefer most recent past date (or today)
+    if (diff >= 0 && diff < closestPastDiff) { closestPastDiff = diff; closestPastIdx = i; }
+  });
+  sel.selectedIndex = closestPastDiff === Infinity ? 0 : closestPastIdx;
+  sel.disabled = false;
+  sel.onchange = buildGameDropdown;
+  $('divField').disabled = false;
+  $('divField').onchange = buildGameDropdown;
+  buildGameDropdown();
+}
+
+function buildGameDropdown(){
+  const date = $('dateField').value;
+  const divFilter = $('divField').value;
+  const sel = $('gameField');
+  const games = GAMES
+    .filter(g => g.date === date)
+    .filter(g => !divFilter || g.div === divFilter)
+    .sort(timeSort);
+  if (!games.length) {
+    sel.innerHTML = '<option>No games match these filters</option>';
+    sel.disabled = true;
+    resetGameSelection();
+    return;
+  }
+  sel.innerHTML = '<option value="">— Select a game —</option>';
+  games.forEach((g, idx) => {
+    const o = document.createElement('option');
+    o.value = idx;
+    const div = DIV_LABELS[g.div] || g.div;
+    const scored = (g.s1 !== '' && g.s1 != null && g.s2 !== '' && g.s2 != null);
+    o.text = g.time + ' — ' + stripParens(g.t1) + ' vs ' + stripParens(g.t2) + ' (' + div + ')' + (scored ? '  ✓' : '');
+    o._game = g;
+    sel.appendChild(o);
+  });
+  sel.disabled = false;
+  sel.onchange = onGameSelected;
+  resetGameSelection();
+}
+
+function resetGameSelection(){
+  selectedGame = null;
+  $('winnerSection').style.display = 'none';
+  $('scoreSection').style.display = 'none';
+  $('submitterSection').style.display = 'none';
+  $('submitBtn').style.display = 'none';
+  $('alreadyScoredWarn').style.display = 'none';
+  $('msgBox').innerHTML = '';
+}
+
+function onGameSelected(){
+  const sel = $('gameField');
+  const opt = sel.options[sel.selectedIndex];
+  if (!opt || !opt._game) { resetGameSelection(); return; }
+  selectedGame = opt._game;
+
+  const t1 = stripParens(selectedGame.t1);
+  const t2 = stripParens(selectedGame.t2);
+
+  const wrap = $('winnerOptions');
+  wrap.innerHTML =
+    '<label><input type="radio" name="winner" value="t1"> <span class="team-label">' + t1 + '</span></label>' +
+    '<label><input type="radio" name="winner" value="t2"> <span class="team-label">' + t2 + '</span></label>';
+  wrap.querySelectorAll('input[type=radio]').forEach(r => r.addEventListener('change', updateSubmitState));
+
+  $('winnerSection').style.display = '';
+  $('scoreSection').style.display = '';
+  $('submitterSection').style.display = '';
+  $('submitBtn').style.display = '';
+
+  // Already scored warning
+  const s1 = selectedGame.s1, s2 = selectedGame.s2;
+  if (s1 !== '' && s1 != null && s2 !== '' && s2 != null) {
+    $('alreadyScoredDetail').textContent = ' Currently ' + t1 + ' ' + s1 + ' – ' + t2 + ' ' + s2 + '.';
+    $('alreadyScoredWarn').style.display = '';
+  } else {
+    $('alreadyScoredWarn').style.display = 'none';
+  }
+
+  $('winScore').value = '';
+  $('loseScore').value = '';
+  $('submitterName').value = '';
+  $('submitterRole').value = '';
+  updateSubmitState();
+}
+
+function updateSubmitState(){
+  const winnerChecked = document.querySelector('input[name=winner]:checked');
+  const w = $('winScore').value, l = $('loseScore').value;
+  const name = $('submitterName').value.trim();
+  const role = $('submitterRole').value;
+  const valid = winnerChecked && w !== '' && l !== '' && parseInt(w) >= 0 && parseInt(l) >= 0 && parseInt(w) > parseInt(l) && name && role;
+  $('submitBtn').disabled = !valid;
+}
+
+['winScore','loseScore','submitterName','submitterRole'].forEach(id => {
+  $(id).addEventListener('input', updateSubmitState);
+  $(id).addEventListener('change', updateSubmitState);
+});
+
+$('submitBtn').addEventListener('click', async () => {
+  if (!selectedGame) return;
+  if (API_URL.indexOf('REPLACE_') === 0 || !API_URL) {
+    showMsg('Form is not connected yet. Admin: paste the Apps Script Web App URL into API_URL.', 'err');
+    return;
+  }
+  const winnerChecked = document.querySelector('input[name=winner]:checked');
+  if (!winnerChecked) return;
+  const winnerCode = winnerChecked.value; // 't1' or 't2'
+  const w = parseInt($('winScore').value);
+  const l = parseInt($('loseScore').value);
+  if (w <= l) {
+    showMsg('Winner score must be higher than loser score.', 'err');
+    return;
+  }
+
+  $('submitBtn').disabled = true;
+  $('submitBtn').innerHTML = '<span class="spinner"></span> Submitting…';
+  showMsg('', 'info');
+
+  const payload = {
+    date: selectedGame.date,
+    time: selectedGame.time,
+    t1: selectedGame.t1,
+    t2: selectedGame.t2,
+    div: selectedGame.div,
+    winner: winnerCode,
+    winScore: w,
+    loseScore: l,
+    submitterName: $('submitterName').value.trim(),
+    submitterRole: $('submitterRole').value
+  };
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: new URLSearchParams(payload)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showMsg('✓ Result submitted! Pages will update within ~60 seconds.', 'ok');
+      resetGameSelection();
+      $('gameField').selectedIndex = 0;
+      // Reload games in background so scored ✓ shows
+      setTimeout(loadGames, 70000);
+    } else {
+      showMsg('Could not submit: ' + (data.error || 'unknown error'), 'err');
+    }
+  } catch (err) {
+    showMsg('Network error: ' + err.message, 'err');
+  } finally {
+    $('submitBtn').disabled = false;
+    $('submitBtn').innerHTML = 'Submit Results';
+    updateSubmitState();
+  }
+});
+
+loadGames();
+
+// Broadcast height to parent iframe
+function broadcastHeight(){window.parent.postMessage({type:'resize',height:document.body.scrollHeight},'*');}
+window.addEventListener('load',broadcastHeight);
+new MutationObserver(broadcastHeight).observe(document.body,{childList:true,subtree:true});
+setInterval(broadcastHeight,500);
+</script>
+</body>
+</html>
