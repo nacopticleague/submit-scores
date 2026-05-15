@@ -20,6 +20,7 @@ body{font-family:Arial,sans-serif;background:#fff;color:#1a1a1a;}
 .fg select,.fg input{width:100%;padding:10px 12px;border:2px solid #b8a492;border-radius:6px;font-size:.92rem;font-weight:600;color:#5c1010;background:#fff;cursor:pointer;font-family:Arial,sans-serif;}
 .fg select:focus,.fg input:focus{outline:none;border-color:#7d1a1a;box-shadow:0 0 0 3px rgba(125,26,26,.15);}
 .fg select:disabled,.fg input:disabled{opacity:.5;cursor:not-allowed;background:#f5efe6;}
+.fg .hint{font-size:.72rem;color:#666;margin-top:5px;font-weight:500;font-style:italic;}
 
 .main{max-width:700px;margin:0 auto;padding:18px 14px 24px;width:100%;}
 
@@ -48,10 +49,11 @@ body{font-family:Arial,sans-serif;background:#fff;color:#1a1a1a;}
 .msg.err{background:#ffebee;color:#a22;border:1px solid #ef9a9a;}
 .msg.info{background:#e8d8b8;color:#5c1010;border:1px solid #b8a492;}
 
-.confirm-wrap{background:#fff8e1;border:2px solid #f57c00;border-radius:8px;padding:12px 14px;margin-top:14px;}
+.confirm-wrap{background:#fff8e1;border:2px solid #f57c00;border-radius:8px;padding:12px 14px;}
+.topbar{padding:14px 16px 0;}
+.topbar .confirm-wrap{max-width:700px;margin:0 auto;}
 .confirm-label{display:flex;align-items:flex-start;gap:10px;font-size:.88rem;color:#5c2a00;font-weight:700;cursor:pointer;line-height:1.4;}
 .confirm-label input[type=checkbox]{margin-top:2px;accent-color:#7d1a1a;flex-shrink:0;width:18px;height:18px;cursor:pointer;}
-.confirm-label .winner-name{color:#7d1a1a;font-weight:800;}
 
 .spinner{display:inline-block;width:18px;height:18px;border:3px solid #eee4dc;border-top-color:#7d1a1a;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:8px;}
 @keyframes spin{to{transform:rotate(360deg);}}
@@ -67,6 +69,15 @@ body{font-family:Arial,sans-serif;background:#fff;color:#1a1a1a;}
 <div class="header">
   <h1>Submit Game Results</h1>
   <div class="sub">NA Coptic League · 2026 Season</div>
+</div>
+
+<div class="topbar">
+  <div class="confirm-wrap">
+    <label class="confirm-label">
+      <input type="checkbox" id="confirmWinner">
+      <span>I confirm I am submitting these results <strong>on behalf of the winning team</strong>, and the information I enter is accurate.</span>
+    </label>
+  </div>
 </div>
 
 <div class="filters">
@@ -123,7 +134,8 @@ body{font-family:Arial,sans-serif;background:#fff;color:#1a1a1a;}
     <h3>Your Info</h3>
     <div class="fg">
       <label>Full Name</label>
-      <input type="text" id="submitterName" placeholder="Exactly as in league records">
+      <input type="text" id="submitterName" placeholder="First Last">
+      <div class="hint">First and last name only — exactly as on your league profile. No middle names or nicknames.</div>
     </div>
     <div class="fg">
       <label>Date of Birth</label>
@@ -137,12 +149,6 @@ body{font-family:Arial,sans-serif;background:#fff;color:#1a1a1a;}
         <option value="Assistant Coach">Assistant Coach</option>
         <option value="Coordinator">Coordinator</option>
       </select>
-    </div>
-    <div class="confirm-wrap">
-      <label class="confirm-label">
-        <input type="checkbox" id="confirmWinner">
-        <span id="confirmText">Pick the winning team above first.</span>
-      </label>
     </div>
   </div>
 
@@ -267,7 +273,7 @@ function onGameSelected(){
     '<label><input type="radio" name="winner" value="t1"> <span class="team-label">' + t1 + '</span></label>' +
     '<label><input type="radio" name="winner" value="t2"> <span class="team-label">' + t2 + '</span></label>';
   wrap.querySelectorAll('input[type=radio]').forEach(r => {
-    r.addEventListener('change', () => { updateConfirmText(); updateSubmitState(); });
+    r.addEventListener('change', updateSubmitState);
   });
 
   $('winnerSection').style.display = '';
@@ -289,20 +295,7 @@ function onGameSelected(){
   $('submitterName').value = '';
   $('submitterDob').value = '';
   $('submitterRole').value = '';
-  $('confirmWinner').checked = false;
-  updateConfirmText();
   updateSubmitState();
-}
-
-function updateConfirmText(){
-  const winnerChecked = document.querySelector('input[name=winner]:checked');
-  const txt = $('confirmText');
-  if (!winnerChecked || !selectedGame){
-    txt.innerHTML = 'Pick the winning team above first.';
-    return;
-  }
-  const winName = winnerChecked.value === 't1' ? stripParens(selectedGame.t1) : stripParens(selectedGame.t2);
-  txt.innerHTML = 'I confirm I am from <span class="winner-name">' + winName + '</span>, the winning team submitting these results.';
 }
 
 function updateSubmitState(){
