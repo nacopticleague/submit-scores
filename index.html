@@ -44,6 +44,11 @@ body{font-family:Arial,sans-serif;background:#fff;color:#1a1a1a;}
 .warn{background:#fff3e0;border-left:4px solid #f57c00;padding:10px 14px;border-radius:4px;font-size:.85rem;color:#5c2a00;margin-bottom:12px;}
 .warn strong{display:block;margin-bottom:2px;}
 
+.locked-notice{background:#ffebee;border:2px solid #a22;padding:16px 18px;border-radius:8px;color:#5c1010;margin-bottom:12px;text-align:center;}
+.locked-notice .lock-title{display:block;font-size:1rem;font-weight:800;margin-bottom:8px;}
+.locked-notice .lock-detail{font-size:.95rem;font-weight:700;color:#222;background:#fff;padding:8px 12px;border-radius:5px;display:inline-block;margin-bottom:8px;}
+.locked-notice .lock-help{font-size:.82rem;font-weight:600;color:#5c1010;margin-top:4px;}
+
 .msg{padding:14px 16px;border-radius:8px;font-weight:700;font-size:.92rem;text-align:center;margin-bottom:12px;}
 .msg.ok{background:#e8f5e9;color:#1a6b1a;border:1px solid #a5d6a7;}
 .msg.err{background:#ffebee;color:#a22;border:1px solid #ef9a9a;}
@@ -105,10 +110,10 @@ body{font-family:Arial,sans-serif;background:#fff;color:#1a1a1a;}
 
 <div class="main">
 
-  <div id="alreadyScoredWarn" class="warn" style="display:none;">
-    <strong>⚠️ This game already has a final score.</strong>
-    <span id="alreadyScoredDetail"></span>
-    Submitting will overwrite it.
+  <div id="lockedNotice" class="locked-notice" style="display:none;">
+    <span class="lock-title">🔒 This game has been scored and is locked.</span>
+    <div class="lock-detail" id="lockedDetail"></div>
+    <div class="lock-help">To correct a result, contact your league admin.</div>
   </div>
 
   <div class="section" id="winnerSection" style="display:none;">
@@ -240,7 +245,7 @@ function buildGameDropdown(){
     o.value = idx;
     const div = DIV_LABELS[g.div] || g.div;
     const scored = (g.s1 !== '' && g.s1 != null && g.s2 !== '' && g.s2 != null);
-    o.text = g.time + ' — ' + stripParens(g.t1) + ' vs ' + stripParens(g.t2) + ' (' + div + ')' + (scored ? '  ✓' : '');
+    o.text = g.time + ' — ' + stripParens(g.t1) + ' vs ' + stripParens(g.t2) + ' (' + div + ')' + (scored ? '  🔒' : '');
     o._game = g;
     sel.appendChild(o);
   });
@@ -255,7 +260,7 @@ function resetGameSelection(){
   $('scoreSection').style.display = 'none';
   $('submitterSection').style.display = 'none';
   $('submitBtn').style.display = 'none';
-  $('alreadyScoredWarn').style.display = 'none';
+  $('lockedNotice').style.display = 'none';
   $('msgBox').innerHTML = '';
 }
 
@@ -267,6 +272,23 @@ function onGameSelected(){
 
   const t1 = stripParens(selectedGame.t1);
   const t2 = stripParens(selectedGame.t2);
+  const s1 = selectedGame.s1, s2 = selectedGame.s2;
+  const alreadyScored = (s1 !== '' && s1 != null && s2 !== '' && s2 != null);
+
+  if (alreadyScored){
+    // LOCKED — game already has results, no resubmission allowed
+    $('lockedDetail').textContent = t1 + ' ' + s1 + '  –  ' + t2 + ' ' + s2;
+    $('lockedNotice').style.display = '';
+    $('winnerSection').style.display = 'none';
+    $('scoreSection').style.display = 'none';
+    $('submitterSection').style.display = 'none';
+    $('submitBtn').style.display = 'none';
+    $('msgBox').innerHTML = '';
+    return;
+  }
+
+  // Unscored game — normal flow
+  $('lockedNotice').style.display = 'none';
 
   const wrap = $('winnerOptions');
   wrap.innerHTML =
@@ -280,15 +302,6 @@ function onGameSelected(){
   $('scoreSection').style.display = '';
   $('submitterSection').style.display = '';
   $('submitBtn').style.display = '';
-
-  // Already scored warning
-  const s1 = selectedGame.s1, s2 = selectedGame.s2;
-  if (s1 !== '' && s1 != null && s2 !== '' && s2 != null) {
-    $('alreadyScoredDetail').textContent = ' Currently ' + t1 + ' ' + s1 + ' – ' + t2 + ' ' + s2 + '.';
-    $('alreadyScoredWarn').style.display = '';
-  } else {
-    $('alreadyScoredWarn').style.display = 'none';
-  }
 
   $('winScore').value = '';
   $('loseScore').value = '';
