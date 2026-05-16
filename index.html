@@ -49,6 +49,30 @@ body{font-family:Arial,sans-serif;background:#fff;color:#1a1a1a;}
 .locked-notice .lock-detail{font-size:.95rem;font-weight:700;color:#222;background:#fff;padding:8px 12px;border-radius:5px;display:inline-block;margin-bottom:8px;}
 .locked-notice .lock-help{font-size:.82rem;font-weight:600;color:#5c1010;margin-top:4px;}
 
+/* ── Success Screen ── */
+.success-screen{display:none;padding:28px 18px 36px;text-align:center;max-width:520px;margin:0 auto;}
+.success-screen.show{display:block;}
+.success-icon{width:84px;height:84px;background:linear-gradient(135deg,#2e8b3a 0%,#1a6b1a 100%);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 6px 20px rgba(26,107,26,.25);animation:popIn .35s cubic-bezier(.18,.89,.32,1.28);}
+.success-icon svg{width:48px;height:48px;}
+.success-title{font-family:Arial, sans-serif;font-size:1.55rem;font-weight:800;color:#1a6b1a;letter-spacing:.01em;margin-bottom:6px;}
+.success-sub{font-size:.92rem;color:#5c2a00;margin-bottom:22px;font-weight:600;}
+.success-card{background:#fff;border:2px solid #d4a55a;border-radius:12px;padding:18px 20px;margin-bottom:22px;box-shadow:0 2px 10px rgba(80,20,20,.08);text-align:left;}
+.success-card-label{font-size:.7rem;font-weight:800;color:#7d1a1a;letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px;text-align:center;}
+.success-game-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:.96rem;}
+.success-game-row.winner{font-weight:800;color:#1a6b1a;}
+.success-game-row.loser{color:#666;}
+.success-game-row .team{flex:1;}
+.success-game-row .score{font-family:Arial, sans-serif;font-size:1.3rem;font-weight:800;min-width:50px;text-align:right;}
+.success-game-row.winner .score{color:#1a6b1a;}
+.success-game-divider{border-top:1px solid #f0e6dd;margin:4px 0;}
+.success-meta{font-size:.78rem;color:#777;margin-top:14px;padding-top:12px;border-top:1px solid #f0e6dd;text-align:center;line-height:1.5;}
+.success-meta strong{color:#5c2a00;}
+.success-note{background:#fdf5e8;border-left:4px solid #d4a55a;padding:11px 14px;border-radius:6px;font-size:.84rem;color:#5c3a10;margin-bottom:22px;font-weight:500;line-height:1.45;text-align:left;}
+.success-note strong{color:#7d1a1a;}
+.success-btn{background:linear-gradient(135deg,#7d1a1a 0%,#9c2a2a 100%);color:#fff;border:0;padding:12px 22px;border-radius:8px;font-size:.95rem;font-weight:800;cursor:pointer;font-family:Arial, sans-serif;letter-spacing:.02em;width:100%;max-width:280px;transition:transform .12s,box-shadow .12s;}
+.success-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(80,20,20,.25);}
+@keyframes popIn{0%{transform:scale(.3);opacity:0;}60%{transform:scale(1.05);}100%{transform:scale(1);opacity:1;}}
+
 .msg{padding:14px 16px;border-radius:8px;font-weight:700;font-size:.92rem;text-align:center;margin-bottom:12px;}
 .msg.ok{background:#e8f5e9;color:#1a6b1a;border:1px solid #a5d6a7;}
 .msg.err{background:#ffebee;color:#a22;border:1px solid #ef9a9a;}
@@ -76,15 +100,6 @@ body{font-family:Arial,sans-serif;background:#fff;color:#1a1a1a;}
   <div class="sub">NA Coptic League · 2026 Season</div>
 </div>
 
-<div class="topbar">
-  <div class="confirm-wrap">
-    <label class="confirm-label">
-      <input type="checkbox" id="confirmWinner">
-      <span>I confirm I am submitting these results <strong>on behalf of the winning team</strong>, and the information I enter is accurate.</span>
-    </label>
-  </div>
-</div>
-
 <div class="filters">
   <div class="fg">
     <label>Date of Game</label>
@@ -109,6 +124,33 @@ body{font-family:Arial,sans-serif;background:#fff;color:#1a1a1a;}
 </div>
 
 <div class="main">
+
+  <div id="successScreen" class="success-screen">
+    <div class="success-icon">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5 12.5 L10 17.5 L19 7.5" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h2 class="success-title">Score Submitted!</h2>
+    <p class="success-sub">Your result has been saved successfully.</p>
+
+    <div class="success-card">
+      <div class="success-card-label">Final Score</div>
+      <div id="successGameRows"></div>
+      <div class="success-meta">
+        <strong id="successDateLine"></strong><br>
+        <span id="successDivLine"></span>
+      </div>
+    </div>
+
+    <div class="success-note">
+      <strong>What's next?</strong> The Schedule, Standings, and My Games pages will update within <strong>~60 seconds</strong>. The result is now locked — to correct it, text Mark Megalla at <strong>(718) 812-9385</strong>.
+    </div>
+
+    <button id="submitAnotherBtn" class="success-btn">Submit Another Game</button>
+  </div>
+
+  <div id="formArea">
 
   <div id="lockedNotice" class="locked-notice" style="display:none;">
     <span class="lock-title">🔒 This game has been scored and is locked.</span>
@@ -159,7 +201,16 @@ body{font-family:Arial,sans-serif;background:#fff;color:#1a1a1a;}
 
   <div id="msgBox"></div>
 
+  <div id="confirmSection" class="confirm-wrap" style="display:none;margin-bottom:14px;">
+    <label class="confirm-label">
+      <input type="checkbox" id="confirmWinner">
+      <span>I confirm I am submitting these results <strong>on behalf of the winning team</strong>, and the information I enter is accurate.</span>
+    </label>
+  </div>
+
   <button id="submitBtn" class="btn" style="display:none;" disabled>Submit Results</button>
+
+  </div>
 
 </div>
 
@@ -259,6 +310,7 @@ function resetGameSelection(){
   $('winnerSection').style.display = 'none';
   $('scoreSection').style.display = 'none';
   $('submitterSection').style.display = 'none';
+  $('confirmSection').style.display = 'none';
   $('submitBtn').style.display = 'none';
   $('lockedNotice').style.display = 'none';
   $('msgBox').innerHTML = '';
@@ -282,6 +334,7 @@ function onGameSelected(){
     $('winnerSection').style.display = 'none';
     $('scoreSection').style.display = 'none';
     $('submitterSection').style.display = 'none';
+    $('confirmSection').style.display = 'none';
     $('submitBtn').style.display = 'none';
     $('msgBox').innerHTML = '';
     return;
@@ -301,6 +354,7 @@ function onGameSelected(){
   $('winnerSection').style.display = '';
   $('scoreSection').style.display = '';
   $('submitterSection').style.display = '';
+  $('confirmSection').style.display = '';
   $('submitBtn').style.display = '';
 
   $('winScore').value = '';
@@ -370,11 +424,17 @@ $('submitBtn').addEventListener('click', async () => {
     });
     const data = await res.json();
     if (data.ok) {
-      showMsg('✓ Result submitted! Pages will update within ~60 seconds.', 'ok');
-      resetGameSelection();
-      $('gameField').selectedIndex = 0;
-      // Reload games in background so scored ✓ shows
-      setTimeout(loadGames, 70000);
+      // Show full success screen
+      showSuccessScreen({
+        t1: selectedGame.t1,
+        t2: selectedGame.t2,
+        winner: winnerCode,  // 't1' or 't2'
+        winScore: w,
+        loseScore: l,
+        date: selectedGame.date,
+        time: selectedGame.time,
+        div: selectedGame.div
+      });
     } else {
       showMsg('Could not submit: ' + (data.error || 'unknown error'), 'err');
     }
@@ -385,6 +445,49 @@ $('submitBtn').addEventListener('click', async () => {
     $('submitBtn').innerHTML = 'Submit Results';
     updateSubmitState();
   }
+});
+
+function showSuccessScreen(d){
+  const t1Name = stripParens(d.t1);
+  const t2Name = stripParens(d.t2);
+  const winnerName = d.winner === 't1' ? t1Name : t2Name;
+  const loserName  = d.winner === 't1' ? t2Name : t1Name;
+  const winnerScore = d.winScore, loserScore = d.loseScore;
+
+  $('successGameRows').innerHTML =
+    '<div class="success-game-row winner">' +
+      '<span class="team">🏆 ' + winnerName + '</span>' +
+      '<span class="score">' + winnerScore + '</span>' +
+    '</div>' +
+    '<div class="success-game-divider"></div>' +
+    '<div class="success-game-row loser">' +
+      '<span class="team">' + loserName + '</span>' +
+      '<span class="score">' + loserScore + '</span>' +
+    '</div>';
+
+  const dateObj = new Date(d.date + 'T00:00:00');
+  const dateStr = isNaN(dateObj) ? d.date : dateObj.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+  $('successDateLine').textContent = dateStr + (d.time ? ' · ' + d.time : '');
+  $('successDivLine').textContent = (DIV_LABELS[d.div] || d.div) + ' Division';
+
+  // Hide form, show success
+  document.querySelector('.filters').style.display = 'none';
+  $('formArea').style.display = 'none';
+  $('successScreen').classList.add('show');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+$('submitAnotherBtn').addEventListener('click', () => {
+  // Reset and show form again
+  $('successScreen').classList.remove('show');
+  document.querySelector('.filters').style.display = '';
+  $('formArea').style.display = '';
+  $('confirmWinner').checked = false;
+  resetGameSelection();
+  $('gameField').selectedIndex = 0;
+  $('divField').selectedIndex = 0;
+  loadGames();  // reload to pick up the new 🔒 on the game just submitted
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
 loadGames();
